@@ -10,11 +10,11 @@ A Windower 4 addon for Final Fantasy XI that tracks your gil spent while utilizi
   * **0 Combat Disk Saves**: No lag from synchronous writes to your hard drive/SSD in combat. Data changes are cached in memory and safely flushed to disk when you zone, logout, or unload the addon.
   * **Packet Debouncing**: Enforces a scheduling lock on network packets so that rapid inventory updates (e.g. during massive gear swaps) only trigger a single update check.
   * **Coordinate Caching**: Reduces layout calculations in the `prerender` frame hook to near-zero by only updating the stats block location if the header is actively being dragged.
-* 🔊 **Arcade Audio Milestones**: 
-  * Plays register chime sound effects when crossing key session milestones (10K, 25K, 50K, 100K, etc.) rather than chiming on every single swing.
+* 🔊 **Arcade Audio & Text Milestones**: 
+  * Plays register chime sound effects and displays floating milestone flairs when crossing key session milestones (10K, 25K, 50K, 100K, etc.).
   * Milestone sounds scale dynamically in length and bell count as the milestones grow.
   * A dramatic Windows `tada.wav` fanfare triggers when you cross all-time million-gil milestones.
-  * All audio triggers are clean table-driven lookups at the top of `BrokeWatch.lua` for easy future customization.
+  * All audio chimes and alert texts are clean table-driven lookups at the top of `BrokeWatch.lua` for easy editing and custom expansions.
 
 ## Installation
 1. Download or clone this repository.

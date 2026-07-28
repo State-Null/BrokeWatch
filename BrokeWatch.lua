@@ -115,6 +115,27 @@ local total_milestone_sounds = {
     [100000000] = 'C:\\Windows\\Media\\tada.wav',
 }
 
+-- Milestone to alert text mappings (easy to edit/customize)
+local session_milestone_texts = {
+    [10000]  = '10K Session Loss!',
+    [25000]  = '25K Session Loss!',
+    [50000]  = '50K Session Loss!',
+    [100000] = '100K Session Loss!',
+    [150000] = '150K Session Loss!',
+    [200000] = '200K Session Loss!',
+    [250000] = '250K Session Loss!',
+    [300000] = '300K Session Loss!',
+    [350000] = '350K Session Loss!',
+}
+
+local total_milestone_texts = {
+    [1000000]   = '★ 1 MILLION TOTAL LOSS! ★',
+    [5000000]   = '★ 5 MILLION TOTAL LOSS! ★',
+    [10000000]  = '★ 10 MILLION TOTAL LOSS! ★',
+    [50000000]  = '★ 50 MILLION TOTAL LOSS! ★',
+    [100000000] = '★ 100 MILLION TOTAL LOSS! ★',
+}
+
 local session_highest_milestone = 0
 
 -- Initialize the text boxes
@@ -320,13 +341,9 @@ local function check_gil()
                 if session_spent >= milestone then
                     if session_highest_milestone < milestone then
                         session_highest_milestone = milestone
-                        local label
-                        if milestone >= 1000000 then
-                            label = (milestone / 1000000) .. 'M'
-                        else
-                            label = (milestone / 1000) .. 'K'
-                        end
-                        trigger_flair(label .. ' Session Loss!', false)
+                        local label = milestone >= 1000000 and ((milestone / 1000000) .. 'M') or ((milestone / 1000) .. 'K')
+                        local text = session_milestone_texts[milestone] or (label .. ' Session Loss!')
+                        trigger_flair(text, false)
                         
                         if settings.sound_enabled then
                             local sound_effect = session_milestone_sounds[milestone] or settings.sound_effect
@@ -345,14 +362,10 @@ local function check_gil()
                 if settings.all_time_spent >= milestone then
                     if settings.highest_total_milestone < milestone then
                         settings.highest_total_milestone = milestone
-                        local label
-                        if milestone >= 1000000 then
-                            label = (milestone / 1000000) .. ' MILLION'
-                        else
-                            label = (milestone / 1000) .. 'K'
-                        end
+                        local label = milestone >= 1000000 and ((milestone / 1000000) .. ' MILLION') or ((milestone / 1000) .. 'K')
+                        local text = total_milestone_texts[milestone] or ('★ ' .. label .. ' TOTAL LOSS! ★')
                         local sound_file = total_milestone_sounds[milestone] or 'C:\\Windows\\Media\\tada.wav'
-                        trigger_flair('★ ' .. label .. ' TOTAL LOSS! ★', true, sound_file)
+                        trigger_flair(text, true, sound_file)
                     end
                     break
                 end
