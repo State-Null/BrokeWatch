@@ -2,7 +2,7 @@
 
 A Windower 4 addon for Final Fantasy XI that tracks your gil spent while utilizing the Hoxne Ampulla enchantment.
 
-![BrokeWatch HUD](brokewatch_preview.png)
+![BrokeWatch HUD](brokewatch_preview_v2.png)
 
 ## Features
 * 📈 **Dynamic Visibility**: The HUD automatically pops up on your screen when you equip the **Hoxne Ampulla**, and hides itself as soon as you unequip it to keep your UI clutter-free.
@@ -29,7 +29,7 @@ A Windower 4 addon for Final Fantasy XI that tracks your gil spent while utilizi
 ## Commands
 Interact with the addon using `//broke` or `//brokewatch`:
 * `//broke reset` or `//broke reset session` – Resets current session loss and milestones to 0.
-* `//broke reset all` – Resets total all-time loss and milestones to 0.
+* `//broke reset all` – Resets total tossed gil and milestones to 0.
 * `//broke show` / `//broke hide` – Manually toggle HUD visibility.
 * `//broke sound [on/off]` – Enable or disable milestone sound chimes.
 * `//broke sound set [1/2/5]` – Switch and play a preview of the cash register sounds (1, 2, or 5).
