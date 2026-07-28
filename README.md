@@ -1,14 +1,11 @@
 # BrokeWatch
 
-An interactive, stock-market-themed Windower 4 addon for Final Fantasy XI that tracks your gil spent while utilizing the **Hoxne Ampulla** enchantment (+100% Double Attack in exchange for 1,000 gil per proc).
-
-Designed to be streamer-friendly, lightweight, and highly optimized for performance-sensitive combat.
+A Windower 4 addon for Final Fantasy XI that tracks your gil spent while utilizing the Hoxne Ampulla enchantment.
 
 ![BrokeWatch HUD](brokewatch_preview.png)
 
 ## Features
 * 📈 **Dynamic Visibility**: The HUD automatically pops up on your screen when you equip the **Hoxne Ampulla**, and hides itself as soon as you unequip it to keep your UI clutter-free.
-* 📊 **Stock-Market Aesthetics**: Displays your real-time status as `SPENDING v` (active gil loss in red) or `SAVING ^` (safe in green), alongside color-coded session and all-time loss counters.
 * ⚡ **High-Frequency Optimization**:
   * **0 Combat Disk Saves**: No lag from synchronous writes to your hard drive/SSD in combat. Data changes are cached in memory and safely flushed to disk when you zone, logout, or unload the addon.
   * **Packet Debouncing**: Enforces a scheduling lock on network packets so that rapid inventory updates (e.g. during massive gear swaps) only trigger a single update check.
