@@ -1,0 +1,38 @@
+# BrokeWatch
+
+An interactive, stock-market-themed Windower 4 addon for Final Fantasy XI that tracks your gil spent while utilizing the **Hoxne Ampulla** enchantment (+100% Double Attack in exchange for 1,000 gil per proc).
+
+Designed to be streamer-friendly, lightweight, and highly optimized for performance-sensitive combat.
+
+![BrokeWatch HUD](brokewatch_preview.png)
+
+## Features
+* 📈 **Dynamic Visibility**: The HUD automatically pops up on your screen when you equip the **Hoxne Ampulla**, and hides itself as soon as you unequip it to keep your UI clutter-free.
+* 📊 **Stock-Market Aesthetics**: Displays your real-time status as `SPENDING v` (active gil loss in red) or `SAVING ^` (safe in green), alongside color-coded session and all-time loss counters.
+* ⚡ **High-Frequency Optimization**:
+  * **0 Combat Disk Saves**: No lag from synchronous writes to your hard drive/SSD in combat. Data changes are cached in memory and safely flushed to disk when you zone, logout, or unload the addon.
+  * **Packet Debouncing**: Enforces a scheduling lock on network packets so that rapid inventory updates (e.g. during massive gear swaps) only trigger a single update check.
+  * **Coordinate Caching**: Reduces layout calculations in the `prerender` frame hook to near-zero by only updating the stats block location if the header is actively being dragged.
+* 🔊 **Arcade Audio Milestones**: 
+  * Plays register chime sound effects when crossing key session milestones (10K, 25K, 50K, 100K, etc.) rather than chiming on every single swing.
+  * Milestone sounds scale dynamically in length and bell count as the milestones grow.
+  * A dramatic Windows `tada.wav` fanfare triggers when you cross all-time million-gil milestones.
+  * All audio triggers are clean table-driven lookups at the top of `BrokeWatch.lua` for easy future customization.
+
+## Installation
+1. Download or clone this repository.
+2. Place the `BrokeWatch` folder inside your Windower addons directory:
+   `C:\Windower4\addons\`
+3. Load the addon in-game:
+   ```windower
+   //lua load BrokeWatch
+   ```
+   *(To auto-load on startup, add `lua load BrokeWatch` to your `Windower4/scripts/init.txt`)*
+
+## Commands
+Interact with the addon using `//broke` or `//brokewatch`:
+* `//broke reset` or `//broke reset session` – Resets current session loss and milestones to 0.
+* `//broke reset all` – Resets total all-time loss and milestones to 0.
+* `//broke show` / `//broke hide` – Manually toggle HUD visibility.
+* `//broke sound [on/off]` – Enable or disable milestone sound chimes.
+* `//broke sound set [1/2/5]` – Switch and play a preview of the cash register sounds (1, 2, or 5).

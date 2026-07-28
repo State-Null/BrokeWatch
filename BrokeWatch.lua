@@ -1,0 +1,459 @@
+_addon.name = 'BrokeWatch'
+_addon.author = 'Antigravity Department'
+_addon.version = '1.0'
+_addon.commands = {'broke', 'brokewatch'}
+
+local texts = require('texts')
+local config = require('config')
+
+-- Default settings for Windower config library
+local default_settings = {
+    all_time_spent = 0,
+    highest_total_milestone = 0,
+    sound_effect = 'cash_register_01.wav',
+    sound_enabled = true,
+    hud = {
+        pos = {
+            x = 100,
+            y = 100
+        },
+        bg = {
+            alpha = 0,
+            red = 0,
+            green = 0,
+            blue = 0,
+            visible = false
+        },
+        text = {
+            font = 'Highwind',
+            size = 14,
+            color = {alpha = 255, red = 255, green = 255, blue = 255},
+            stroke = {alpha = 255, red = 0, green = 0, blue = 0, width = 3}
+        },
+        flags = {
+            draggable = true,
+            bold = true
+        },
+        padding = 8
+    },
+    body = {
+        pos = {
+            x = 100,
+            y = 138
+        },
+        bg = {
+            alpha = 0,
+            red = 0,
+            green = 0,
+            blue = 0,
+            visible = false
+        },
+        text = {
+            font = 'Consolas',
+            size = 10,
+            color = {alpha = 255, red = 255, green = 255, blue = 255},
+            stroke = {alpha = 255, red = 0, green = 0, blue = 0, width = 3}
+        },
+        flags = {
+            draggable = false,
+            bold = true
+        },
+        padding = 8
+    },
+    flair = {
+        pos = {
+            x = 100,
+            y = 80
+        },
+        bg = {
+            alpha = 0,
+            red = 0,
+            green = 0,
+            blue = 0,
+            visible = false
+        },
+        text = {
+            font = 'Highwind',
+            size = 12,
+            color = {alpha = 255, red = 255, green = 255, blue = 255},
+            stroke = {alpha = 255, red = 0, green = 0, blue = 0, width = 3}
+        },
+        flags = {
+            draggable = false,
+            bold = true
+        },
+        padding = 0
+    }
+}
+
+local settings = config.load(default_settings)
+local session_spent = 0
+local current_gil = nil
+
+-- Define milestones lists
+local session_milestones = {350000, 300000, 250000, 200000, 150000, 100000, 50000, 25000, 10000}
+local total_milestones = {100000000, 50000000, 10000000, 5000000, 1000000}
+
+-- Milestone to sound file mappings (easy to edit/expand)
+local session_milestone_sounds = {
+    [10000]  = 'cash_register_01.wav',
+    [25000]  = 'cash_register_01.wav',
+    [50000]  = 'cash_register_01.wav',
+    [100000] = 'cash_register_02.wav',
+    [150000] = 'cash_register_02.wav',
+    [200000] = 'cash_register_02.wav',
+    [250000] = 'cash_register_05.wav',
+    [300000] = 'cash_register_05.wav',
+    [350000] = 'cash_register_05.wav',
+}
+
+local total_milestone_sounds = {
+    [1000000]   = 'C:\\Windows\\Media\\tada.wav',
+    [5000000]   = 'C:\\Windows\\Media\\tada.wav',
+    [10000000]  = 'C:\\Windows\\Media\\tada.wav',
+    [50000000]  = 'C:\\Windows\\Media\\tada.wav',
+    [100000000] = 'C:\\Windows\\Media\\tada.wav',
+}
+
+local session_highest_milestone = 0
+
+-- Initialize the text boxes
+local hud_header = texts.new('', settings.hud, settings)
+local hud_body = texts.new('', settings.body, settings)
+local hud_flair = texts.new('', settings.flair, settings)
+
+local flair_visible = false
+local flair_fading = false
+local flair_fade_start = 0
+
+-- Initialize milestones helper
+local function init_milestones()
+    -- Initialize session milestone
+    for _, milestone in ipairs(session_milestones) do
+        if session_spent >= milestone then
+            session_highest_milestone = milestone
+            break
+        end
+    end
+    -- Initialize total milestone
+    for _, milestone in ipairs(total_milestones) do
+        if settings.all_time_spent >= milestone then
+            settings.highest_total_milestone = milestone
+            config.save(settings)
+            break
+        end
+    end
+end
+
+init_milestones()
+
+-- Trigger floating flair animation
+local function trigger_flair(text, is_dramatic, sound_path)
+    hud_flair:text(text)
+    flair_fade_start = os.clock()
+    flair_visible = true
+    flair_fading = true
+    
+    if is_dramatic and sound_path then
+        if windower.file_exists(sound_path) then
+            windower.play_sound(sound_path)
+        end
+    end
+end
+
+-- Synchronize positions and animate flair in prerender
+local last_x, last_y = nil, nil
+windower.register_event('prerender', function()
+    if hud_header:visible() then
+        local x, y = hud_header:pos()
+        if x ~= last_x or y ~= last_y then
+            hud_body:pos(x, y + 38) -- snaps body 38 pixels below header
+            last_x, last_y = x, y
+        end
+    end
+    
+    if flair_visible and flair_fading then
+        local now = os.clock()
+        local t = (now - flair_fade_start) / 2.0 -- 2-second animation
+        if t >= 1 then
+            hud_flair:hide()
+            flair_visible = false
+            flair_fading = false
+        else
+            local alpha = math.floor(255 * (1 - t))
+            local float_offset = math.floor(30 * t) -- floats up 30 pixels
+            local x, y = hud_header:pos()
+            hud_flair:pos(x, y - 20 - float_offset) -- floats above the header
+            hud_flair:alpha(alpha)
+            hud_flair:stroke_alpha(alpha)
+            hud_flair:show()
+        end
+    end
+end)
+
+-- Format thousands with commas
+local function format_thousands(num)
+    local num_str = tostring(num)
+    local formatted = num_str
+    while true do
+        local k
+        formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
+        if k == 0 then
+            break
+        end
+    end
+    return formatted
+end
+
+-- Detects if "Hoxne Ampulla" (item ID 22310) is equipped in the ammo slot
+local function is_hoxne_equipped()
+    local equip = windower.ffxi.get_items('equipment')
+    if not equip then return false end
+    
+    local ammo_slot = equip.ammo
+    local ammo_bag = equip.ammo_bag
+    if not ammo_slot or not ammo_bag or ammo_slot == 0 then
+        return false
+    end
+    
+    local item = windower.ffxi.get_items(ammo_bag, ammo_slot)
+    return item and item.id == 22310
+end
+
+-- Detects if the player has the "enchantment" buff (ID 162) active
+local function is_enchantment_active()
+    local player = windower.ffxi.get_player()
+    if not player or not player.buffs then return false end
+    
+    for _, buff_id in ipairs(player.buffs) do
+        if buff_id == 162 then
+            return true
+        end
+    end
+    return false
+end
+
+-- Update the text box display
+local function update_ui()
+    local equipped = is_hoxne_equipped()
+    local active = equipped and is_enchantment_active()
+    
+    if not equipped then
+        hud_header:hide()
+        hud_body:hide()
+        return
+    end
+    
+    hud_header:show()
+    hud_body:show()
+    
+    local active_text = active and '\\cs(255,50,50)SPENDING v\\cr' or '\\cs(0,255,128)SAVING ^\\cr'
+    hud_header:text('\\cs(255,215,0)[ BROKE WATCH ]\\cr\n\\cs(100,100,100)------------------------\\cr')
+    
+    local lines = {
+        'Status: ' .. active_text,
+        'Session Loss: \\cs(255,100,100)-' .. format_thousands(session_spent) .. '\\cr gil',
+        'Total Loss:   \\cs(255,50,50)-' .. format_thousands(settings.all_time_spent) .. '\\cr gil'
+    }
+    
+    hud_body:text(table.concat(lines, '\n'))
+end
+
+-- Check gil difference and update tracking
+local function check_gil()
+    local info = windower.ffxi.get_info()
+    if not info or not info.logged_in then
+        current_gil = nil
+        return
+    end
+
+    local items = windower.ffxi.get_items()
+    if not items then return end
+    
+    local new_gil = items.gil
+    if not new_gil then return end
+
+    if not current_gil then
+        current_gil = new_gil
+        update_ui()
+        return
+    end
+
+    if new_gil < current_gil then
+        local diff = current_gil - new_gil
+        if is_hoxne_equipped() and is_enchantment_active() then
+            session_spent = session_spent + diff
+            settings.all_time_spent = settings.all_time_spent + diff
+            
+            -- Check session milestones (e.g. 100K Session Loss!)
+            for _, milestone in ipairs(session_milestones) do
+                if session_spent >= milestone then
+                    if session_highest_milestone < milestone then
+                        session_highest_milestone = milestone
+                        local label
+                        if milestone >= 1000000 then
+                            label = (milestone / 1000000) .. 'M'
+                        else
+                            label = (milestone / 1000) .. 'K'
+                        end
+                        trigger_flair(label .. ' Session Loss!', false)
+                        
+                        if settings.sound_enabled then
+                            local sound_effect = session_milestone_sounds[milestone] or settings.sound_effect
+                            local sound_file = windower.addon_path .. 'sounds/' .. sound_effect
+                            if windower.file_exists(sound_file) then
+                                windower.play_sound(sound_file)
+                            end
+                        end
+                    end
+                    break
+                end
+            end
+
+            -- Check total milestones (e.g. ★ 1 MILLION TOTAL LOSS! ★)
+            for _, milestone in ipairs(total_milestones) do
+                if settings.all_time_spent >= milestone then
+                    if settings.highest_total_milestone < milestone then
+                        settings.highest_total_milestone = milestone
+                        local label
+                        if milestone >= 1000000 then
+                            label = (milestone / 1000000) .. ' MILLION'
+                        else
+                            label = (milestone / 1000) .. 'K'
+                        end
+                        local sound_file = total_milestone_sounds[milestone] or 'C:\\Windows\\Media\\tada.wav'
+                        trigger_flair('★ ' .. label .. ' TOTAL LOSS! ★', true, sound_file)
+                    end
+                    break
+                end
+            end
+        end
+    end
+    
+    current_gil = new_gil
+    update_ui()
+end
+
+-- Incoming chunk listener for tracking gil state changes
+local check_scheduled = false
+windower.register_event('incoming chunk', function(id, data, modified, injected, blocked)
+    if id == 0x01D or id == 0x020 or id == 0x00A then
+        if not check_scheduled then
+            check_scheduled = true
+            coroutine.schedule(function()
+                check_scheduled = false
+                check_gil()
+            end, 0.1)
+        end
+    end
+end)
+
+-- Event listeners for buff changes to dynamically update status UI
+windower.register_event('buff change', function(id, gain)
+    if id == 162 then
+        update_ui()
+    end
+end)
+
+-- Event listeners for login and load states
+windower.register_event('login', function()
+    session_spent = 0
+    current_gil = nil
+    init_milestones()
+    coroutine.schedule(check_gil, 0.5)
+end)
+
+windower.register_event('load', function()
+    init_milestones()
+    if windower.ffxi.get_info().logged_in then
+        coroutine.schedule(check_gil, 0.5)
+    else
+        update_ui()
+    end
+end)
+
+windower.register_event('unload', function()
+    config.save(settings)
+end)
+
+windower.register_event('logout', function()
+    config.save(settings)
+end)
+
+windower.register_event('zone change', function(new_zone_id, old_zone_id)
+    config.save(settings)
+end)
+
+-- Command handler
+windower.register_event('addon command', function(comm, ...)
+    local args = {...}
+    comm = comm and comm:lower() or nil
+    
+    if not comm then
+        windower.add_to_chat(8, 'BrokeWatch: Available commands: reset [session/all], show, hide, sound [on/off/set [1/2/5]]')
+        return
+    end
+
+    if comm == 'reset' then
+        local sub = args[1] and args[1]:lower() or 'session'
+        if sub == 'session' then
+            session_spent = 0
+            session_highest_milestone = 0
+            windower.add_to_chat(8, 'BrokeWatch: Session loss and milestones reset to 0 gil.')
+            update_ui()
+        elseif sub == 'all' then
+            settings.all_time_spent = 0
+            settings.highest_total_milestone = 0
+            config.save(settings)
+            windower.add_to_chat(8, 'BrokeWatch: Total loss and milestones reset to 0 gil.')
+            update_ui()
+        else
+            windower.add_to_chat(8, 'BrokeWatch: Unknown reset target. Use "session" or "all".')
+        end
+    elseif comm == 'show' then
+        hud_header:show()
+        hud_body:show()
+        windower.add_to_chat(8, 'BrokeWatch: UI shown.')
+    elseif comm == 'hide' then
+        hud_header:hide()
+        hud_body:hide()
+        windower.add_to_chat(8, 'BrokeWatch: UI hidden.')
+    elseif comm == 'sound' then
+        local sub = args[1] and args[1]:lower() or nil
+        if not sub then
+            windower.add_to_chat(8, 'BrokeWatch: Sound is currently ' .. (settings.sound_enabled and 'on' or 'off') .. '. Current effect: ' .. settings.sound_effect)
+            return
+        end
+
+        if sub == 'on' then
+            settings.sound_enabled = true
+            config.save(settings)
+            windower.add_to_chat(8, 'BrokeWatch: Sound effects enabled.')
+        elseif sub == 'off' then
+            settings.sound_enabled = false
+            config.save(settings)
+            windower.add_to_chat(8, 'BrokeWatch: Sound effects disabled.')
+        elseif sub == 'set' then
+            local val = args[2]
+            if val == '1' or val == '2' or val == '5' then
+                settings.sound_effect = 'cash_register_0' .. val .. '.wav'
+                config.save(settings)
+                windower.add_to_chat(8, 'BrokeWatch: Sound effect set to ' .. settings.sound_effect)
+                
+                -- play preview
+                local sound_file = windower.addon_path .. 'sounds/' .. settings.sound_effect
+                if windower.file_exists(sound_file) then
+                    windower.play_sound(sound_file)
+                else
+                    windower.add_to_chat(8, 'BrokeWatch: Preview sound file not found at: ' .. sound_file)
+                end
+            else
+                windower.add_to_chat(8, 'BrokeWatch: Invalid sound. Choose 1, 2, or 5.')
+            end
+        else
+            windower.add_to_chat(8, 'BrokeWatch: Unknown sound command. Use "on", "off", or "set [1/2/5]".')
+        end
+    else
+        windower.add_to_chat(8, 'BrokeWatch: Unknown command. Use "reset", "show", "hide", or "sound".')
+    end
+end)
