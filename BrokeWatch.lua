@@ -126,6 +126,11 @@ local flair_visible = false
 local flair_fading = false
 local flair_fade_start = 0
 
+-- Auto-dimming state variables
+local last_activity_time = os.clock()
+local last_active_state = false
+local current_hud_alpha = 255
+
 -- Initialize milestones helper
 local function init_milestones()
     -- Initialize session milestone
@@ -189,6 +194,25 @@ windower.register_event('prerender', function()
             hud_flair:show()
         end
     end
+
+    -- Auto-dimming logic
+    local target_alpha = 255
+    if os.clock() - last_activity_time > 180 then
+        target_alpha = 80
+    end
+    
+    if current_hud_alpha ~= target_alpha then
+        local step = 5
+        if current_hud_alpha < target_alpha then
+            current_hud_alpha = math.min(target_alpha, current_hud_alpha + step)
+        else
+            current_hud_alpha = math.max(target_alpha, current_hud_alpha - step)
+        end
+        hud_header:alpha(current_hud_alpha)
+        hud_header:stroke_alpha(current_hud_alpha)
+        hud_body:alpha(current_hud_alpha)
+        hud_body:stroke_alpha(current_hud_alpha)
+    end
 end)
 
 -- Format thousands with commas
@@ -238,6 +262,11 @@ local function update_ui()
     local equipped = is_hoxne_equipped()
     local active = equipped and is_enchantment_active()
     
+    if active ~= last_active_state then
+        last_activity_time = os.clock()
+        last_active_state = active
+    end
+    
     if not equipped then
         hud_header:hide()
         hud_body:hide()
@@ -247,13 +276,13 @@ local function update_ui()
     hud_header:show()
     hud_body:show()
     
-    local active_text = active and '\\cs(255,50,50)SPENDING v\\cr' or '\\cs(0,255,128)SAVING ^\\cr'
-    hud_header:text('\\cs(255,215,0)[ BROKE WATCH ]\\cr\n\\cs(100,100,100)------------------------\\cr')
+    local active_text = active and '\\cs(220,90,90)SPENDING v\\cr' or '\\cs(100,180,130)SAVING ^\\cr'
+    hud_header:text('\\cs(218,165,32)[ BROKE WATCH ]\\cr\n\\cs(100,100,100)------------------------\\cr')
     
     local lines = {
         'Status: ' .. active_text,
-        'Session Loss: \\cs(255,100,100)-' .. format_thousands(session_spent) .. '\\cr gil',
-        'Total Loss:   \\cs(255,50,50)-' .. format_thousands(settings.all_time_spent) .. '\\cr gil'
+        'Session Loss: \\cs(200,120,120)-' .. format_thousands(session_spent) .. '\\cr gil',
+        'Total Loss:   \\cs(200,90,90)-' .. format_thousands(settings.all_time_spent) .. '\\cr gil'
     }
     
     hud_body:text(table.concat(lines, '\n'))
@@ -281,6 +310,7 @@ local function check_gil()
 
     if new_gil < current_gil then
         local diff = current_gil - new_gil
+        last_activity_time = os.clock()
         if is_hoxne_equipped() and is_enchantment_active() then
             session_spent = session_spent + diff
             settings.all_time_spent = settings.all_time_spent + diff
@@ -386,6 +416,7 @@ end)
 
 -- Command handler
 windower.register_event('addon command', function(comm, ...)
+    last_activity_time = os.clock()
     local args = {...}
     comm = comm and comm:lower() or nil
     
