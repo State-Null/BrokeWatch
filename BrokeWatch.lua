@@ -151,6 +151,7 @@ local flair_fade_start = 0
 local last_activity_time = os.clock()
 local last_active_state = false
 local current_hud_alpha = 255
+local is_visible = false
 
 -- Initialize milestones helper
 local function init_milestones()
@@ -190,7 +191,7 @@ end
 -- Synchronize positions and animate flair in prerender
 local last_x, last_y = nil, nil
 windower.register_event('prerender', function()
-    if hud_header:visible() then
+    if is_visible then
         local x, y = hud_header:pos()
         if x ~= last_x or y ~= last_y then
             hud_body:pos(x, y + 38) -- snaps body 38 pixels below header
@@ -291,11 +292,13 @@ local function update_ui()
     if not equipped then
         hud_header:hide()
         hud_body:hide()
+        is_visible = false
         return
     end
     
     hud_header:show()
     hud_body:show()
+    is_visible = true
     
     local active_text = active and '\\cs(220,90,90)SPENDING v\\cr' or '\\cs(100,180,130)SAVING ^\\cr'
     hud_header:text('\\cs(218,165,32)[ BROKE WATCH ]\\cr\n\\cs(100,100,100)------------------------\\cr')
@@ -457,10 +460,12 @@ windower.register_event('addon command', function(comm, ...)
     elseif comm == 'show' then
         hud_header:show()
         hud_body:show()
+        is_visible = true
         windower.add_to_chat(8, 'BrokeWatch: UI shown.')
     elseif comm == 'hide' then
         hud_header:hide()
         hud_body:hide()
+        is_visible = false
         windower.add_to_chat(8, 'BrokeWatch: UI hidden.')
     elseif comm == 'sound' then
         local sub = args[1] and args[1]:lower() or nil
