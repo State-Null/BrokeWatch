@@ -6,6 +6,10 @@ A Windower 4 addon for Final Fantasy XI that tracks your gil spent while utilizi
 
 ## Features
 * 📈 **Dynamic Visibility**: The HUD automatically pops up on your screen when you equip the **Hoxne Ampulla**, and hides itself as soon as you unequip it to keep your UI clutter-free.
+* 🌙 **OLED Burn-in Protection (Auto-Dimming & Muted Colors)**:
+  * **Auto-Dimming**: Fades the HUD opacity smoothly to **30% (alpha 80)** after **3 minutes** of idle time (no combat, gear changes, or command inputs).
+  * **Instant Wake-up**: Wakes up immediately back to **100% opacity (alpha 255)** upon any gil loss, equipment change, or command execution.
+  * **Pastel Color Palette**: Uses lower-luminance pastel colors (Goldenrod, Coral Red, Sage Green, and Slate Red) to reduce screen stress on OLED monitors/TVs.
 * ⚡ **High-Frequency Optimization**:
   * **0 Combat Disk Saves**: No lag from synchronous writes to your hard drive/SSD in combat. Data changes are cached in memory and safely flushed to disk when you zone, logout, or unload the addon.
   * **Packet Debouncing**: Enforces a scheduling lock on network packets so that rapid inventory updates (e.g. during massive gear swaps) only trigger a single update check.
