@@ -322,7 +322,7 @@ local function update_ui()
     local lines = {
         'Status: ' .. active_text,
         'Session Loss: \\cs(' .. user_settings.colors.session_loss .. ')-' .. format_thousands(session_spent) .. '\\cr gil',
-        'Total Loss:   \\cs(' .. user_settings.colors.total_loss .. ')-' .. format_thousands(settings.all_time_spent) .. '\\cr gil'
+        'Total Tossed: \\cs(' .. user_settings.colors.total_loss .. ')-' .. format_thousands(settings.all_time_spent) .. '\\cr gil'
     }
     
     hud_body:text(table.concat(lines, '\n'))
