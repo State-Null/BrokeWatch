@@ -5,13 +5,14 @@ _addon.commands = {'broke', 'brokewatch'}
 
 local texts = require('texts')
 local config = require('config')
+local user_settings = require('user_settings')
 
--- Default settings for Windower config library
+-- Default settings referencing user_settings
 local default_settings = {
     all_time_spent = 0,
     highest_total_milestone = 0,
-    sound_effect = 'cash_register_01.wav',
-    sound_enabled = true,
+    sound_effect = user_settings.sounds.default_effect,
+    sound_enabled = user_settings.sounds.enabled_by_default,
     hud = {
         pos = {
             x = 100,
@@ -25,8 +26,8 @@ local default_settings = {
             visible = false
         },
         text = {
-            font = 'Highwind',
-            size = 14,
+            font = user_settings.fonts.header.font,
+            size = user_settings.fonts.header.size,
             color = {alpha = 255, red = 255, green = 255, blue = 255},
             stroke = {alpha = 255, red = 0, green = 0, blue = 0, width = 3}
         },
@@ -49,8 +50,8 @@ local default_settings = {
             visible = false
         },
         text = {
-            font = 'Consolas',
-            size = 10,
+            font = user_settings.fonts.body.font,
+            size = user_settings.fonts.body.size,
             color = {alpha = 255, red = 255, green = 255, blue = 255},
             stroke = {alpha = 255, red = 0, green = 0, blue = 0, width = 3}
         },
@@ -73,8 +74,8 @@ local default_settings = {
             visible = false
         },
         text = {
-            font = 'Highwind',
-            size = 12,
+            font = user_settings.fonts.flair.font,
+            size = user_settings.fonts.flair.size,
             color = {alpha = 255, red = 255, green = 255, blue = 255},
             stroke = {alpha = 255, red = 0, green = 0, blue = 0, width = 3}
         },
@@ -90,51 +91,30 @@ local settings = config.load(default_settings)
 local session_spent = 0
 local current_gil = nil
 
--- Define milestones lists
-local session_milestones = {350000, 300000, 250000, 200000, 150000, 100000, 50000, 25000, 10000}
-local total_milestones = {100000000, 50000000, 10000000, 5000000, 1000000}
+-- Define milestones lists and maps populated from user_settings
+local session_milestones = {}
+local session_milestone_sounds = {}
+local session_milestone_texts = {}
 
--- Milestone to sound file mappings (easy to edit/expand)
-local session_milestone_sounds = {
-    [10000]  = 'cash_register_01.wav',
-    [25000]  = 'cash_register_01.wav',
-    [50000]  = 'cash_register_01.wav',
-    [100000] = 'cash_register_02.wav',
-    [150000] = 'cash_register_02.wav',
-    [200000] = 'cash_register_02.wav',
-    [250000] = 'cash_register_05.wav',
-    [300000] = 'cash_register_05.wav',
-    [350000] = 'cash_register_05.wav',
-}
+local total_milestones = {}
+local total_milestone_sounds = {}
+local total_milestone_texts = {}
 
-local total_milestone_sounds = {
-    [1000000]   = 'C:\\Windows\\Media\\tada.wav',
-    [5000000]   = 'C:\\Windows\\Media\\tada.wav',
-    [10000000]  = 'C:\\Windows\\Media\\tada.wav',
-    [50000000]  = 'C:\\Windows\\Media\\tada.wav',
-    [100000000] = 'C:\\Windows\\Media\\tada.wav',
-}
+for _, item in ipairs(user_settings.milestones.session) do
+    table.insert(session_milestones, item.value)
+    session_milestone_sounds[item.value] = item.sound
+    session_milestone_texts[item.value] = item.text
+end
 
--- Milestone to alert text mappings (easy to edit/customize)
-local session_milestone_texts = {
-    [10000]  = '10K Session Loss!',
-    [25000]  = '25K Session Loss!',
-    [50000]  = '50K Session Loss!',
-    [100000] = '100K Session Loss!',
-    [150000] = '150K Session Loss!',
-    [200000] = '200K Session Loss!',
-    [250000] = '250K Session Loss!',
-    [300000] = '300K Session Loss!',
-    [350000] = '350K Session Loss!',
-}
+for _, item in ipairs(user_settings.milestones.total) do
+    table.insert(total_milestones, item.value)
+    total_milestone_sounds[item.value] = item.sound
+    total_milestone_texts[item.value] = item.text
+end
 
-local total_milestone_texts = {
-    [1000000]   = '★ 1 MILLION TOTAL LOSS! ★',
-    [5000000]   = '★ 5 MILLION TOTAL LOSS! ★',
-    [10000000]  = '★ 10 MILLION TOTAL LOSS! ★',
-    [50000000]  = '★ 50 MILLION TOTAL LOSS! ★',
-    [100000000] = '★ 100 MILLION TOTAL LOSS! ★',
-}
+-- Sort the milestone arrays descending
+table.sort(session_milestones, function(a, b) return a > b end)
+table.sort(total_milestones, function(a, b) return a > b end)
 
 local session_highest_milestone = 0
 
@@ -300,13 +280,16 @@ local function update_ui()
     hud_body:show()
     is_visible = true
     
-    local active_text = active and '\\cs(220,90,90)SPENDING v\\cr' or '\\cs(100,180,130)SAVING ^\\cr'
-    hud_header:text('\\cs(218,165,32)[ BROKE WATCH ]\\cr\n\\cs(100,100,100)------------------------\\cr')
+    local active_text = active 
+        and ('\\cs(' .. user_settings.colors.active_status .. ')SPENDING v\\cr') 
+        or ('\\cs(' .. user_settings.colors.inactive_status .. ')SAVING ^\\cr')
+        
+    hud_header:text('\\cs(' .. user_settings.colors.title .. ')[ BROKE WATCH ]\\cr\n\\cs(' .. user_settings.colors.divider .. ')------------------------\\cr')
     
     local lines = {
         'Status: ' .. active_text,
-        'Session Loss: \\cs(200,120,120)-' .. format_thousands(session_spent) .. '\\cr gil',
-        'Total Loss:   \\cs(200,90,90)-' .. format_thousands(settings.all_time_spent) .. '\\cr gil'
+        'Session Loss: \\cs(' .. user_settings.colors.session_loss .. ')-' .. format_thousands(session_spent) .. '\\cr gil',
+        'Total Loss:   \\cs(' .. user_settings.colors.total_loss .. ')-' .. format_thousands(settings.all_time_spent) .. '\\cr gil'
     }
     
     hud_body:text(table.concat(lines, '\n'))
