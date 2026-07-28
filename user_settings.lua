@@ -1,8 +1,26 @@
 return {
     fonts = {
-        header = { font = 'Highwind', size = 14 },
-        body = { font = 'Consolas', size = 10 },
-        flair = { font = 'Highwind', size = 12 }
+        header = {
+            font = 'Highwind',
+            size = 14,
+            color = { alpha = 255, red = 255, green = 255, blue = 255 },
+            stroke = { alpha = 255, red = 0, green = 0, blue = 0, width = 3 },
+            bg = { alpha = 0, red = 0, green = 0, blue = 0, visible = false }
+        },
+        body = {
+            font = 'Consolas',
+            size = 10,
+            color = { alpha = 255, red = 255, green = 255, blue = 255 },
+            stroke = { alpha = 255, red = 0, green = 0, blue = 0, width = 3 },
+            bg = { alpha = 0, red = 0, green = 0, blue = 0, visible = false }
+        },
+        flair = {
+            font = 'Highwind',
+            size = 12,
+            color = { alpha = 255, red = 255, green = 255, blue = 255 },
+            stroke = { alpha = 255, red = 0, green = 0, blue = 0, width = 3 },
+            bg = { alpha = 0, red = 0, green = 0, blue = 0, visible = false }
+        }
     },
     colors = {
         title = '218,165,32',

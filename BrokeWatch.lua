@@ -19,17 +19,28 @@ local default_settings = {
             y = 100
         },
         bg = {
-            alpha = 0,
-            red = 0,
-            green = 0,
-            blue = 0,
-            visible = false
+            alpha = user_settings.fonts.header.bg.alpha,
+            red = user_settings.fonts.header.bg.red,
+            green = user_settings.fonts.header.bg.green,
+            blue = user_settings.fonts.header.bg.blue,
+            visible = user_settings.fonts.header.bg.visible
         },
         text = {
             font = user_settings.fonts.header.font,
             size = user_settings.fonts.header.size,
-            color = {alpha = 255, red = 255, green = 255, blue = 255},
-            stroke = {alpha = 255, red = 0, green = 0, blue = 0, width = 3}
+            color = {
+                alpha = user_settings.fonts.header.color.alpha,
+                red = user_settings.fonts.header.color.red,
+                green = user_settings.fonts.header.color.green,
+                blue = user_settings.fonts.header.color.blue
+            },
+            stroke = {
+                alpha = user_settings.fonts.header.stroke.alpha,
+                red = user_settings.fonts.header.stroke.red,
+                green = user_settings.fonts.header.stroke.green,
+                blue = user_settings.fonts.header.stroke.blue,
+                width = user_settings.fonts.header.stroke.width
+            }
         },
         flags = {
             draggable = true,
@@ -43,17 +54,28 @@ local default_settings = {
             y = 138
         },
         bg = {
-            alpha = 0,
-            red = 0,
-            green = 0,
-            blue = 0,
-            visible = false
+            alpha = user_settings.fonts.body.bg.alpha,
+            red = user_settings.fonts.body.bg.red,
+            green = user_settings.fonts.body.bg.green,
+            blue = user_settings.fonts.body.bg.blue,
+            visible = user_settings.fonts.body.bg.visible
         },
         text = {
             font = user_settings.fonts.body.font,
             size = user_settings.fonts.body.size,
-            color = {alpha = 255, red = 255, green = 255, blue = 255},
-            stroke = {alpha = 255, red = 0, green = 0, blue = 0, width = 3}
+            color = {
+                alpha = user_settings.fonts.body.color.alpha,
+                red = user_settings.fonts.body.color.red,
+                green = user_settings.fonts.body.color.green,
+                blue = user_settings.fonts.body.color.blue
+            },
+            stroke = {
+                alpha = user_settings.fonts.body.stroke.alpha,
+                red = user_settings.fonts.body.stroke.red,
+                green = user_settings.fonts.body.stroke.green,
+                blue = user_settings.fonts.body.stroke.blue,
+                width = user_settings.fonts.body.stroke.width
+            }
         },
         flags = {
             draggable = false,
@@ -67,17 +89,28 @@ local default_settings = {
             y = 80
         },
         bg = {
-            alpha = 0,
-            red = 0,
-            green = 0,
-            blue = 0,
-            visible = false
+            alpha = user_settings.fonts.flair.bg.alpha,
+            red = user_settings.fonts.flair.bg.red,
+            green = user_settings.fonts.flair.bg.green,
+            blue = user_settings.fonts.flair.bg.blue,
+            visible = user_settings.fonts.flair.bg.visible
         },
         text = {
             font = user_settings.fonts.flair.font,
             size = user_settings.fonts.flair.size,
-            color = {alpha = 255, red = 255, green = 255, blue = 255},
-            stroke = {alpha = 255, red = 0, green = 0, blue = 0, width = 3}
+            color = {
+                alpha = user_settings.fonts.flair.color.alpha,
+                red = user_settings.fonts.flair.color.red,
+                green = user_settings.fonts.flair.color.green,
+                blue = user_settings.fonts.flair.color.blue
+            },
+            stroke = {
+                alpha = user_settings.fonts.flair.stroke.alpha,
+                red = user_settings.fonts.flair.stroke.red,
+                green = user_settings.fonts.flair.stroke.green,
+                blue = user_settings.fonts.flair.stroke.blue,
+                width = user_settings.fonts.flair.stroke.width
+            }
         },
         flags = {
             draggable = false,
