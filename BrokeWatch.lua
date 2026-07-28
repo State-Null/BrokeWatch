@@ -421,7 +421,7 @@ windower.register_event('addon command', function(comm, ...)
     comm = comm and comm:lower() or nil
     
     if not comm then
-        windower.add_to_chat(8, 'BrokeWatch: Available commands: reset [session/all], show, hide, sound [on/off/set [1/2/5]]')
+        windower.add_to_chat(8, 'BrokeWatch: Available commands: reset [session/all], show, hide, sound [on/off/set [1/2/5]], font [header/body/size]')
         return
     end
 
@@ -484,7 +484,61 @@ windower.register_event('addon command', function(comm, ...)
         else
             windower.add_to_chat(8, 'BrokeWatch: Unknown sound command. Use "on", "off", or "set [1/2/5]".')
         end
+    elseif comm == 'font' then
+        local target = args[1] and args[1]:lower() or nil
+        if not target then
+            windower.add_to_chat(8, 'BrokeWatch: Current fonts: Header="'..settings.hud.text.font..'" (Size '..settings.hud.text.size..'), Body="'..settings.body.text.font..'" (Size '..settings.body.text.size..')')
+            windower.add_to_chat(8, 'BrokeWatch: Commands: //broke font header <name> | body <name> | size header <num> | size body <num>')
+            return
+        end
+        
+        if target == 'header' then
+            local font_name = table.concat(args, ' ', 2)
+            if font_name ~= '' then
+                settings.hud.text.font = font_name
+                settings.flair.text.font = font_name
+                config.save(settings)
+                hud_header:font(font_name)
+                hud_flair:font(font_name)
+                windower.add_to_chat(8, 'BrokeWatch: Header font set to "' .. font_name .. '".')
+                update_ui()
+            else
+                windower.add_to_chat(8, 'BrokeWatch: Please specify a font name.')
+            end
+        elseif target == 'body' then
+            local font_name = table.concat(args, ' ', 2)
+            if font_name ~= '' then
+                settings.body.text.font = font_name
+                config.save(settings)
+                hud_body:font(font_name)
+                windower.add_to_chat(8, 'BrokeWatch: Body font set to "' .. font_name .. '".')
+                update_ui()
+            else
+                windower.add_to_chat(8, 'BrokeWatch: Please specify a font name.')
+            end
+        elseif target == 'size' then
+            local sub = args[2] and args[2]:lower() or nil
+            local size = tonumber(args[3])
+            if (sub == 'header' or sub == 'body') and size then
+                if sub == 'header' then
+                    settings.hud.text.size = size
+                    config.save(settings)
+                    hud_header:size(size)
+                    windower.add_to_chat(8, 'BrokeWatch: Header font size set to ' .. size .. '.')
+                else
+                    settings.body.text.size = size
+                    config.save(settings)
+                    hud_body:size(size)
+                    windower.add_to_chat(8, 'BrokeWatch: Body font size set to ' .. size .. '.')
+                end
+                update_ui()
+            else
+                windower.add_to_chat(8, 'BrokeWatch: Usage: //broke font size [header/body] <number>')
+            end
+        else
+            windower.add_to_chat(8, 'BrokeWatch: Unknown font subcommand. Use "header", "body", or "size".')
+        end
     else
-        windower.add_to_chat(8, 'BrokeWatch: Unknown command. Use "reset", "show", "hide", or "sound".')
+        windower.add_to_chat(8, 'BrokeWatch: Unknown command. Use "reset", "show", "hide", "sound", or "font".')
     end
 end)

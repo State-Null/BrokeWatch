@@ -33,3 +33,7 @@ Interact with the addon using `//broke` or `//brokewatch`:
 * `//broke show` / `//broke hide` – Manually toggle HUD visibility.
 * `//broke sound [on/off]` – Enable or disable milestone sound chimes.
 * `//broke sound set [1/2/5]` – Switch and play a preview of the cash register sounds (1, 2, or 5).
+* `//broke font` – Print current fonts and commands.
+* `//broke font header <font_name>` – Set the font face for the header.
+* `//broke font body <font_name>` – Set the font face for the stats body.
+* `//broke font size [header/body] <size>` – Set the font size for the header or body.
