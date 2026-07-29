@@ -285,7 +285,7 @@ windower.register_event('prerender', function()
             local x, y = hud_header:pos()
             if x ~= last_x or y ~= last_y then
                 hud_body:pos(x, y + 38) -- snaps body 38 pixels below header
-                hud_side:pos(x + (user_settings.side_offset_x or 185), y + (user_settings.side_offset_y or 5))
+                hud_side:pos(x + (user_settings.side_offset_x or 195), y + (user_settings.side_offset_y or 11))
                 last_x, last_y = x, y
             end
         end
@@ -427,20 +427,21 @@ local function update_ui()
     local x, y = hud_header:pos()
     last_x, last_y = x, y
     hud_body:pos(x, y + 38)
-    hud_side:pos(x + (user_settings.side_offset_x or 185), y + (user_settings.side_offset_y or 5))
+    hud_side:pos(x + (user_settings.side_offset_x or 195), y + (user_settings.side_offset_y or 11))
     
     local active_text = active 
         and ('\\cs(' .. user_settings.colors.active_status .. ')SPENDING v\\cr') 
         or ('\\cs(' .. user_settings.colors.inactive_status .. ')SAVING ^\\cr')
         
-    hud_header:text('\\cs(' .. user_settings.colors.title .. ')[ BROKE WATCH ]\\cr\n\\cs(' .. user_settings.colors.divider .. ')------------------------\\cr')
+    hud_header:text('\\cs(' .. user_settings.colors.title .. ')[ BROKE WATCH ]\\cr')
     
     local recent_spent = get_recent_spend()
     local shorthand = format_shorthand(recent_spent)
     hud_side:text('\\cs(' .. user_settings.colors.side_label .. ')15m:\\cr \\cs(' .. user_settings.colors.side_value .. ')' .. shorthand .. '\\cr')
     
     hud_body:text(
-        'Status: ' .. active_text .. '\n' ..
+        '\\cs(' .. user_settings.colors.divider .. ')------------------------\\cr\n' ..
+        'Status:       ' .. active_text .. '\n' ..
         'Session Loss: \\cs(' .. user_settings.colors.session_loss .. ')-' .. format_thousands(session_spent) .. '\\cr gil\n' ..
         'Total Tossed: \\cs(' .. user_settings.colors.total_loss .. ')-' .. format_thousands(settings.all_time_spent) .. '\\cr gil'
     )
