@@ -205,6 +205,8 @@ local is_visible = false
 local is_tracking_active = false
 local last_x, last_y = nil, nil
 local spend_history = {}
+local frame_counter = 0
+local target_alpha = 255
 
 local function get_recent_spend()
     local now = os.clock()
@@ -260,13 +262,24 @@ end
 
 -- Synchronize positions and animate flair in prerender
 windower.register_event('prerender', function()
-    if is_visible then
-        local x, y = hud_header:pos()
-        if x ~= last_x or y ~= last_y then
-            hud_body:pos(x, y + 38) -- snaps body 38 pixels below header
-            last_x, last_y = x, y
+    frame_counter = frame_counter + 1
+    
+    if frame_counter % 10 == 0 then
+        if is_visible then
+            local x, y = hud_header:pos()
+            if x ~= last_x or y ~= last_y then
+                hud_body:pos(x, y + 38) -- snaps body 38 pixels below header
+                hud_side:pos(x + (user_settings.side_offset_x or 185), y + (user_settings.side_offset_y or 5))
+                last_x, last_y = x, y
+            end
         end
-        hud_side:pos(x + (user_settings.side_offset_x or 185), y + (user_settings.side_offset_y or 5))
+        
+        -- Auto-dimming threshold check
+        if os.clock() - last_activity_time > 180 then
+            target_alpha = 80
+        else
+            target_alpha = 255
+        end
     end
     
     if flair_visible and flair_fading then
@@ -288,12 +301,7 @@ windower.register_event('prerender', function()
         end
     end
 
-    -- Auto-dimming logic
-    local target_alpha = 255
-    if os.clock() - last_activity_time > 180 then
-        target_alpha = 80
-    end
-    
+    -- Keep fading transition running every frame for fluid animation
     if current_hud_alpha ~= target_alpha then
         local step = 5
         if current_hud_alpha < target_alpha then
@@ -408,13 +416,11 @@ local function update_ui()
     local shorthand = format_shorthand(recent_spent)
     hud_side:text('\\cs(' .. user_settings.colors.side_label .. ')15m:\\cr \\cs(' .. user_settings.colors.side_value .. ')' .. shorthand .. '\\cr')
     
-    local lines = {
-        'Status: ' .. active_text,
-        'Session Loss: \\cs(' .. user_settings.colors.session_loss .. ')-' .. format_thousands(session_spent) .. '\\cr gil',
+    hud_body:text(
+        'Status: ' .. active_text .. '\n' ..
+        'Session Loss: \\cs(' .. user_settings.colors.session_loss .. ')-' .. format_thousands(session_spent) .. '\\cr gil\n' ..
         'Total Tossed: \\cs(' .. user_settings.colors.total_loss .. ')-' .. format_thousands(settings.all_time_spent) .. '\\cr gil'
-    }
-    
-    hud_body:text(table.concat(lines, '\n'))
+    )
     
     -- Force opacity to persist through text modifications
     hud_header:alpha(current_hud_alpha)
