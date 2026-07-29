@@ -8,6 +8,22 @@ local config = require('config')
 local user_settings = require('user_settings')
 require('chat')
 
+-- Localized Lua standard functions and Windower APIs
+local math_floor = math.floor
+local string_format = string.format
+local tostring = tostring
+local os_clock = os.clock
+local ipairs = ipairs
+local table_insert = table.insert
+local table_remove = table.remove
+
+local windower_ffxi = windower.ffxi
+local windower_ffxi_get_items = windower_ffxi.get_items
+local windower_ffxi_get_player = windower_ffxi.get_player
+local windower_ffxi_get_info = windower_ffxi.get_info
+local windower_file_exists = windower.file_exists
+local windower_play_sound = windower.play_sound
+
 -- Default settings referencing user_settings
 local default_settings = {
     all_time_spent = 0,
@@ -170,13 +186,13 @@ local total_milestone_sounds = {}
 local total_milestone_texts = {}
 
 for _, item in ipairs(user_settings.milestones.session) do
-    table.insert(session_milestones, item.value)
+    table_insert(session_milestones, item.value)
     session_milestone_sounds[item.value] = item.sound
     session_milestone_texts[item.value] = item.text
 end
 
 for _, item in ipairs(user_settings.milestones.total) do
-    table.insert(total_milestones, item.value)
+    table_insert(total_milestones, item.value)
     total_milestone_sounds[item.value] = item.sound
     total_milestone_texts[item.value] = item.text
 end
@@ -198,7 +214,7 @@ local flair_fading = false
 local flair_fade_start = 0
 
 -- Auto-dimming state variables
-local last_activity_time = os.clock()
+local last_activity_time = os_clock()
 local last_active_state = false
 local current_hud_alpha = 255
 local is_visible = false
@@ -209,13 +225,13 @@ local frame_counter = 0
 local target_alpha = 255
 
 local function get_recent_spend()
-    local now = os.clock()
+    local now = os_clock()
     local cutoff = now - (user_settings.recent_interval or 900)
     local total = 0
     
     -- Prune old entries from the front of the queue
     while #spend_history > 0 and spend_history[1].time < cutoff do
-        table.remove(spend_history, 1)
+        table_remove(spend_history, 1)
     end
     
     for _, entry in ipairs(spend_history) do
@@ -249,13 +265,13 @@ init_milestones()
 -- Trigger floating flair animation
 local function trigger_flair(text, is_dramatic, sound_path)
     hud_flair:text(text)
-    flair_fade_start = os.clock()
+    flair_fade_start = os_clock()
     flair_visible = true
     flair_fading = true
     
     if is_dramatic and sound_path then
-        if windower.file_exists(sound_path) then
-            windower.play_sound(sound_path)
+        if windower_file_exists(sound_path) then
+            windower_play_sound(sound_path)
         end
     end
 end
@@ -275,7 +291,7 @@ windower.register_event('prerender', function()
         end
         
         -- Auto-dimming threshold check
-        if os.clock() - last_activity_time > 180 then
+        if os_clock() - last_activity_time > 180 then
             target_alpha = 80
         else
             target_alpha = 255
@@ -283,15 +299,15 @@ windower.register_event('prerender', function()
     end
     
     if flair_visible and flair_fading then
-        local now = os.clock()
+        local now = os_clock()
         local t = (now - flair_fade_start) / 2.0 -- 2-second animation
         if t >= 1 then
             hud_flair:hide()
             flair_visible = false
             flair_fading = false
         else
-            local alpha = math.floor(255 * (1 - t))
-            local float_offset = math.floor(30 * t) -- floats up 30 pixels
+            local alpha = math_floor(255 * (1 - t))
+            local float_offset = math_floor(30 * t) -- floats up 30 pixels
             local x = last_x or 100
             local y = last_y or 100
             hud_flair:pos(x, y - 20 - float_offset) -- floats above the header
@@ -318,30 +334,37 @@ windower.register_event('prerender', function()
     end
 end)
 
--- Format thousands with commas
+-- Format thousands with commas (high-performance fast-path formatting)
 local function format_thousands(num)
-    local num_str = tostring(num)
-    local formatted = num_str
-    while true do
-        local k
-        formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
-        if k == 0 then
-            break
+    local formatted = tostring(num)
+    local len = #formatted
+    if len <= 3 then
+        return formatted
+    elseif len <= 6 then
+        return formatted:sub(1, len - 3) .. ',' .. formatted:sub(len - 2)
+    elseif len <= 9 then
+        return formatted:sub(1, len - 6) .. ',' .. formatted:sub(len - 5, len - 3) .. ',' .. formatted:sub(len - 2)
+    else
+        -- Fallback for extremely large numbers
+        while true do
+            local k
+            formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
+            if k == 0 then break end
         end
+        return formatted
     end
-    return formatted
 end
 
 local function format_shorthand(num)
     if num >= 1000000 then
-        local val = math.floor(num / 100000) / 10
+        local val = math_floor(num / 100000) / 10
         return val .. 'mil'
     elseif num >= 1000 then
-        local val = math.floor(num / 100) / 10 -- e.g. 500k or 12.5k
+        local val = math_floor(num / 100) / 10 -- e.g. 500k or 12.5k
         if val % 1 == 0 then
-            return string.format("%.0fk", val)
+            return string_format("%.0fk", val)
         else
-            return string.format("%.1fk", val)
+            return string_format("%.1fk", val)
         end
     else
         return tostring(num)
@@ -350,7 +373,7 @@ end
 
 -- Detects if "Hoxne Ampulla" (item ID 22310) is equipped in the ammo slot
 local function is_hoxne_equipped()
-    local equip = windower.ffxi.get_items('equipment')
+    local equip = windower_ffxi_get_items('equipment')
     if not equip then return false end
     
     local ammo_slot = equip.ammo
@@ -359,13 +382,13 @@ local function is_hoxne_equipped()
         return false
     end
     
-    local item = windower.ffxi.get_items(ammo_bag, ammo_slot)
+    local item = windower_ffxi_get_items(ammo_bag, ammo_slot)
     return item and item.id == 22310
 end
 
 -- Detects if the player has the "enchantment" buff (ID 162) active
 local function is_enchantment_active()
-    local player = windower.ffxi.get_player()
+    local player = windower_ffxi_get_player()
     if not player or not player.buffs then return false end
     
     for _, buff_id in ipairs(player.buffs) do
@@ -384,7 +407,7 @@ local function update_ui()
     is_tracking_active = active
     
     if active ~= last_active_state then
-        last_activity_time = os.clock()
+        last_activity_time = os_clock()
         last_active_state = active
     end
     
@@ -433,13 +456,13 @@ end
 
 -- Check gil difference and update tracking
 local function check_gil()
-    local info = windower.ffxi.get_info()
+    local info = windower_ffxi_get_info()
     if not info or not info.logged_in then
         current_gil = nil
         return
     end
 
-    local items = windower.ffxi.get_items()
+    local items = windower_ffxi_get_items()
     if not items then return end
     
     local new_gil = items.gil
@@ -454,11 +477,11 @@ local function check_gil()
     if new_gil < current_gil then
         local diff = current_gil - new_gil
         
-        last_activity_time = os.clock()
+        last_activity_time = os_clock()
         if is_tracking_active then
-            local actual_spent = math.floor((diff + 500) / 1000) * 1000
+            local actual_spent = math_floor((diff + 500) / 1000) * 1000
             if actual_spent > 0 then
-                table.insert(spend_history, { time = os.clock(), amount = actual_spent })
+                table_insert(spend_history, { time = os_clock(), amount = actual_spent })
                 session_spent = session_spent + actual_spent
                 settings.all_time_spent = settings.all_time_spent + actual_spent
                 
@@ -474,8 +497,8 @@ local function check_gil()
                             if settings.sound_enabled then
                                 local sound_effect = session_milestone_sounds[milestone] or settings.sound_effect
                                 local sound_file = windower.addon_path .. 'sounds/' .. sound_effect
-                                if windower.file_exists(sound_file) then
-                                    windower.play_sound(sound_file)
+                                if windower_file_exists(sound_file) then
+                                    windower_play_sound(sound_file)
                                 end
                             end
                         end
@@ -535,7 +558,7 @@ end)
 
 windower.register_event('load', function()
     init_milestones()
-    if windower.ffxi.get_info().logged_in then
+    if windower_ffxi_get_info().logged_in then
         coroutine.schedule(check_gil, 0.5)
     else
         update_ui()
@@ -556,7 +579,7 @@ end)
 
 -- Command handler
 windower.register_event('addon command', function(comm, ...)
-    last_activity_time = os.clock()
+    last_activity_time = os_clock()
     local args = {...}
     comm = comm and comm:lower() or nil
     
@@ -619,8 +642,8 @@ windower.register_event('addon command', function(comm, ...)
                 
                 -- play preview
                 local sound_file = windower.addon_path .. 'sounds/' .. settings.sound_effect
-                if windower.file_exists(sound_file) then
-                    windower.play_sound(sound_file)
+                if windower_file_exists(sound_file) then
+                    windower_play_sound(sound_file)
                 else
                     windower.add_to_chat(8, 'BrokeWatch: Preview sound file not found at: ' .. sound_file)
                 end
