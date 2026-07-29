@@ -167,6 +167,7 @@ local last_active_state = false
 local current_hud_alpha = 255
 local is_visible = false
 local pending_gil_gains = 0
+local is_tracking_active = false
 
 -- Initialize milestones helper
 local function init_milestones()
@@ -299,6 +300,8 @@ local function update_ui()
     local equipped = is_hoxne_equipped()
     local active = equipped and is_enchantment_active()
     
+    is_tracking_active = active
+    
     if active ~= last_active_state then
         last_activity_time = os.clock()
         last_active_state = active
@@ -406,7 +409,7 @@ end
 
 -- Intercept FFXI chat logs to capture exact gil gains from mob drops
 windower.register_event('incoming text', function(original, modified, mode, blocked)
-    if not is_hoxne_equipped() or not is_enchantment_active() then
+    if not is_tracking_active then
         pending_gil_gains = 0
         return
     end
