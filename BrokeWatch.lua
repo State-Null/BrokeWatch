@@ -6,6 +6,7 @@ _addon.commands = {'broke', 'brokewatch'}
 local texts = require('texts')
 local config = require('config')
 local user_settings = require('user_settings')
+require('chat')
 
 -- Default settings referencing user_settings
 local default_settings = {
@@ -165,6 +166,7 @@ local last_activity_time = os.clock()
 local last_active_state = false
 local current_hud_alpha = 255
 local is_visible = false
+local pending_gil_gains = 0
 
 -- Initialize milestones helper
 local function init_milestones()
@@ -348,45 +350,51 @@ local function check_gil()
         return
     end
 
-    if new_gil < current_gil then
+    if new_gil < current_gil or pending_gil_gains > 0 then
         local diff = current_gil - new_gil
+        local net_spent = diff + pending_gil_gains
+        pending_gil_gains = 0
+        
         last_activity_time = os.clock()
         if is_hoxne_equipped() and is_enchantment_active() then
-            session_spent = session_spent + diff
-            settings.all_time_spent = settings.all_time_spent + diff
-            
-            -- Check session milestones (e.g. 100K Session Loss!)
-            for _, milestone in ipairs(session_milestones) do
-                if session_spent >= milestone then
-                    if session_highest_milestone < milestone then
-                        session_highest_milestone = milestone
-                        local label = milestone >= 1000000 and ((milestone / 1000000) .. 'M') or ((milestone / 1000) .. 'K')
-                        local text = session_milestone_texts[milestone] or (label .. ' Session Loss!')
-                        trigger_flair(text, false)
-                        
-                        if settings.sound_enabled then
-                            local sound_effect = session_milestone_sounds[milestone] or settings.sound_effect
-                            local sound_file = windower.addon_path .. 'sounds/' .. sound_effect
-                            if windower.file_exists(sound_file) then
-                                windower.play_sound(sound_file)
+            local actual_spent = math.floor((net_spent + 500) / 1000) * 1000
+            if actual_spent > 0 then
+                session_spent = session_spent + actual_spent
+                settings.all_time_spent = settings.all_time_spent + actual_spent
+                
+                -- Check session milestones (e.g. 100K Session Loss!)
+                for _, milestone in ipairs(session_milestones) do
+                    if session_spent >= milestone then
+                        if session_highest_milestone < milestone then
+                            session_highest_milestone = milestone
+                            local label = milestone >= 1000000 and ((milestone / 1000000) .. 'M') or ((milestone / 1000) .. 'K')
+                            local text = session_milestone_texts[milestone] or (label .. ' Session Loss!')
+                            trigger_flair(text, false)
+                            
+                            if settings.sound_enabled then
+                                local sound_effect = session_milestone_sounds[milestone] or settings.sound_effect
+                                local sound_file = windower.addon_path .. 'sounds/' .. sound_effect
+                                if windower.file_exists(sound_file) then
+                                    windower.play_sound(sound_file)
+                                end
                             end
                         end
+                        break
                     end
-                    break
                 end
-            end
 
-            -- Check total milestones (e.g. ★ 1 MILLION TOTAL LOSS! ★)
-            for _, milestone in ipairs(total_milestones) do
-                if settings.all_time_spent >= milestone then
-                    if settings.highest_total_milestone < milestone then
-                        settings.highest_total_milestone = milestone
-                        local label = milestone >= 1000000 and ((milestone / 1000000) .. ' MILLION') or ((milestone / 1000) .. 'K')
-                        local text = total_milestone_texts[milestone] or ('★ ' .. label .. ' TOTAL LOSS! ★')
-                        local sound_file = total_milestone_sounds[milestone] or 'C:\\Windows\\Media\\tada.wav'
-                        trigger_flair(text, true, sound_file)
+                -- Check total milestones (e.g. ★ 1 MILLION TOTAL LOSS! ★)
+                for _, milestone in ipairs(total_milestones) do
+                    if settings.all_time_spent >= milestone then
+                        if settings.highest_total_milestone < milestone then
+                            settings.highest_total_milestone = milestone
+                            local label = milestone >= 1000000 and ((milestone / 1000000) .. ' MILLION') or ((milestone / 1000) .. 'K')
+                            local text = total_milestone_texts[milestone] or ('★ ' .. label .. ' TOTAL LOSS! ★')
+                            local sound_file = total_milestone_sounds[milestone] or 'C:\\Windows\\Media\\tada.wav'
+                            trigger_flair(text, true, sound_file)
+                        end
+                        break
                     end
-                    break
                 end
             end
         end
@@ -395,6 +403,20 @@ local function check_gil()
     current_gil = new_gil
     update_ui()
 end
+
+-- Intercept FFXI chat logs to capture exact gil gains from mob drops
+windower.register_event('incoming text', function(original, modified, mode, blocked)
+    if not is_hoxne_equipped() or not is_enchantment_active() then
+        pending_gil_gains = 0
+        return
+    end
+    
+    local clean_text = original:strip_format()
+    local gain = clean_text:match('You find (%d+) gil%.')
+    if gain then
+        pending_gil_gains = pending_gil_gains + tonumber(gain)
+    end
+end)
 
 -- Incoming chunk listener for tracking gil state changes
 local check_scheduled = false
