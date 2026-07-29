@@ -6,15 +6,16 @@ A Windower 4 addon for Final Fantasy XI that tracks your gil spent while utilizi
 
 ## Features
 * 📈 **Dynamic Visibility**: The HUD automatically pops up on your screen when you equip the **Hoxne Ampulla**, and hides itself as soon as you unequip it to keep your UI clutter-free.
-* ⚙️ **Modular Configuration (user_settings.lua)**: All fonts, color palettes (RGB tags), milestone values, sound files, and alert texts are completely decoupled into a clean `user_settings.lua` configuration profile. Users can customize their entire HUD experience without touching any of the core script logic!
 * 🔊 **Arcade Audio & Text Milestones**: 
   * Plays register chime sound effects and displays floating milestone flairs when crossing key session milestones (10K, 25K, 50K, 100K, etc.).
   * Milestone sounds scale dynamically in length and bell count as the milestones grow.
   * A dramatic Windows `tada.wav` fanfare triggers when you cross all-time million-gil milestones.
+* ⏱️ **Rolling Loss Window**: Displays your rolling expenditure over the last 15 minutes (or any custom duration defined in `user_settings.recent_interval`). Updates dynamically during combat.
 * 🌙 **OLED Burn-in Protection (Auto-Dimming & Muted Colors)**:
   * **Auto-Dimming**: Fades the HUD opacity smoothly to **30% (alpha 80)** after **3 minutes** of idle time (no combat, gear changes, or command inputs).
   * **Instant Wake-up**: Wakes up immediately back to **100% opacity (alpha 255)** upon any gil loss, equipment change, or command execution.
   * **Pastel Color Palette**: Uses lower-luminance pastel colors (Goldenrod, Coral Red, Sage Green, and Slate Red) to reduce screen stress on OLED monitors/TVs.
+* ⚙️ **Modular Configuration (user_settings.lua)**: All fonts, color palettes (RGB tags), milestone values, sound files, and alert texts are completely decoupled into a clean `user_settings.lua` configuration profile. Users can customize their entire HUD experience without touching any of the core script logic!
 
 ## Installation
 1. Download or clone this repository.

@@ -168,6 +168,24 @@ local current_hud_alpha = 255
 local is_visible = false
 local is_tracking_active = false
 local last_x, last_y = nil, nil
+local spend_history = {}
+
+local function get_recent_spend()
+    local now = os.clock()
+    local cutoff = now - (user_settings.recent_interval or 900)
+    local total = 0
+    
+    -- Prune old entries from the front of the queue
+    while #spend_history > 0 and spend_history[1].time < cutoff do
+        table.remove(spend_history, 1)
+    end
+    
+    for _, entry in ipairs(spend_history) do
+        total = total + entry.amount
+    end
+    
+    return total
+end
 
 -- Initialize milestones helper
 local function init_milestones()
@@ -328,8 +346,10 @@ local function update_ui()
         
     hud_header:text('\\cs(' .. user_settings.colors.title .. ')[ BROKE WATCH ]\\cr\n\\cs(' .. user_settings.colors.divider .. ')------------------------\\cr')
     
+    local recent_spent = get_recent_spend()
     local lines = {
         'Status: ' .. active_text,
+        '15-Min Loss:  \\cs(' .. user_settings.colors.recent_loss .. ')-' .. format_thousands(recent_spent) .. '\\cr gil',
         'Session Loss: \\cs(' .. user_settings.colors.session_loss .. ')-' .. format_thousands(session_spent) .. '\\cr gil',
         'Total Tossed: \\cs(' .. user_settings.colors.total_loss .. ')-' .. format_thousands(settings.all_time_spent) .. '\\cr gil'
     }
@@ -364,6 +384,7 @@ local function check_gil()
         if is_tracking_active then
             local actual_spent = math.floor((diff + 500) / 1000) * 1000
             if actual_spent > 0 then
+                table.insert(spend_history, { time = os.clock(), amount = actual_spent })
                 session_spent = session_spent + actual_spent
                 settings.all_time_spent = settings.all_time_spent + actual_spent
                 
@@ -475,11 +496,13 @@ windower.register_event('addon command', function(comm, ...)
         if sub == 'session' then
             session_spent = 0
             session_highest_milestone = 0
+            spend_history = {}
             windower.add_to_chat(8, 'BrokeWatch: Session loss and milestones reset to 0 gil.')
             update_ui()
         elseif sub == 'all' then
             settings.all_time_spent = 0
             settings.highest_total_milestone = 0
+            spend_history = {}
             config.save(settings)
             windower.add_to_chat(8, 'BrokeWatch: Total loss and milestones reset to 0 gil.')
             update_ui()

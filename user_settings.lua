@@ -1,4 +1,5 @@
 return {
+    recent_interval = 900,
     fonts = {
         header = {
             font = 'Highwind',
@@ -28,7 +29,8 @@ return {
         active_status = '220,90,90',
         inactive_status = '100,180,130',
         session_loss = '200,120,120',
-        total_loss = '200,90,90'
+        total_loss = '200,90,90',
+        recent_loss = '200,105,105'
     },
     sounds = {
         default_effect = 'cash_register_01.wav',
