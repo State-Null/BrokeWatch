@@ -437,13 +437,13 @@ local function update_ui()
     
     local recent_spent = get_recent_spend()
     local shorthand = format_shorthand(recent_spent)
-    hud_side:text('\\cs(' .. user_settings.colors.side_label .. ')15m:\\cr \\cs(' .. user_settings.colors.side_value .. ')' .. shorthand .. '\\cr')
+    hud_side:text('\\cs(' .. user_settings.colors.side_value .. ')' .. shorthand .. '\\cr')
     
     hud_body:text(
         '\\cs(' .. user_settings.colors.divider .. ')------------------------\\cr\n' ..
         'Status:       ' .. active_text .. '\n' ..
-        'Session Loss: \\cs(' .. user_settings.colors.session_loss .. ')-' .. format_thousands(session_spent) .. '\\cr gil\n' ..
-        'Total Tossed: \\cs(' .. user_settings.colors.total_loss .. ')-' .. format_thousands(settings.all_time_spent) .. '\\cr gil'
+        'Session Loss: \\cs(' .. user_settings.colors.session_loss .. ')-' .. format_thousands(session_spent) .. '\\cr\n' ..
+        'Total Tossed: \\cs(' .. user_settings.colors.total_loss .. ')-' .. format_thousands(settings.all_time_spent) .. '\\cr'
     )
     
     -- Force opacity to persist through text modifications
