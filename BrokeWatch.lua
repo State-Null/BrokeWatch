@@ -118,6 +118,41 @@ local default_settings = {
             bold = true
         },
         padding = 0
+    },
+    side = {
+        pos = {
+            x = 260,
+            y = 104
+        },
+        bg = {
+            alpha = user_settings.fonts.side.bg.alpha,
+            red = user_settings.fonts.side.bg.red,
+            green = user_settings.fonts.side.bg.green,
+            blue = user_settings.fonts.side.bg.blue,
+            visible = user_settings.fonts.side.bg.visible
+        },
+        text = {
+            font = user_settings.fonts.side.font,
+            size = user_settings.fonts.side.size,
+            color = {
+                alpha = user_settings.fonts.side.color.alpha,
+                red = user_settings.fonts.side.color.red,
+                green = user_settings.fonts.side.color.green,
+                blue = user_settings.fonts.side.color.blue
+            },
+            stroke = {
+                alpha = user_settings.fonts.side.stroke.alpha,
+                red = user_settings.fonts.side.stroke.red,
+                green = user_settings.fonts.side.stroke.green,
+                blue = user_settings.fonts.side.stroke.blue,
+                width = user_settings.fonts.side.stroke.width
+            }
+        },
+        flags = {
+            draggable = false,
+            bold = true
+        },
+        padding = 0
     }
 }
 
@@ -156,6 +191,7 @@ local session_highest_milestone = 0
 local hud_header = texts.new('', settings.hud, settings)
 local hud_body = texts.new('', settings.body, settings)
 local hud_flair = texts.new('', settings.flair, settings)
+local hud_side = texts.new('', settings.side, settings)
 
 local flair_visible = false
 local flair_fading = false
@@ -230,6 +266,7 @@ windower.register_event('prerender', function()
             hud_body:pos(x, y + 38) -- snaps body 38 pixels below header
             last_x, last_y = x, y
         end
+        hud_side:pos(x + 160, y + 4)
     end
     
     if flair_visible and flair_fading then
@@ -268,6 +305,8 @@ windower.register_event('prerender', function()
         hud_header:stroke_alpha(current_hud_alpha)
         hud_body:alpha(current_hud_alpha)
         hud_body:stroke_alpha(current_hud_alpha)
+        hud_side:alpha(current_hud_alpha)
+        hud_side:stroke_alpha(current_hud_alpha)
     end
 end)
 
@@ -283,6 +322,22 @@ local function format_thousands(num)
         end
     end
     return formatted
+end
+
+local function format_shorthand(num)
+    if num >= 1000000 then
+        local val = math.floor(num / 100000) / 10
+        return val .. 'mil'
+    elseif num >= 1000 then
+        local val = math.floor(num / 100) / 10 -- e.g. 500k or 12.5k
+        if val % 1 == 0 then
+            return string.format("%.0fk", val)
+        else
+            return string.format("%.1fk", val)
+        end
+    else
+        return tostring(num)
+    end
 end
 
 -- Detects if "Hoxne Ampulla" (item ID 22310) is equipped in the ammo slot
@@ -328,17 +383,20 @@ local function update_ui()
     if not equipped then
         hud_header:hide()
         hud_body:hide()
+        hud_side:hide()
         is_visible = false
         return
     end
     
     hud_header:show()
     hud_body:show()
+    hud_side:show()
     is_visible = true
     
     local x, y = hud_header:pos()
     last_x, last_y = x, y
     hud_body:pos(x, y + 38)
+    hud_side:pos(x + 160, y + 4)
     
     local active_text = active 
         and ('\\cs(' .. user_settings.colors.active_status .. ')SPENDING v\\cr') 
@@ -347,9 +405,11 @@ local function update_ui()
     hud_header:text('\\cs(' .. user_settings.colors.title .. ')[ BROKE WATCH ]\\cr\n\\cs(' .. user_settings.colors.divider .. ')------------------------\\cr')
     
     local recent_spent = get_recent_spend()
+    local shorthand = format_shorthand(recent_spent)
+    hud_side:text('\\cs(' .. user_settings.colors.side_label .. ')15m:\\cr \\cs(' .. user_settings.colors.side_value .. ')' .. shorthand .. '\\cr')
+    
     local lines = {
         'Status: ' .. active_text,
-        '15-Min Loss:  \\cs(' .. user_settings.colors.recent_loss .. ')-' .. format_thousands(recent_spent) .. '\\cr gil',
         'Session Loss: \\cs(' .. user_settings.colors.session_loss .. ')-' .. format_thousands(session_spent) .. '\\cr gil',
         'Total Tossed: \\cs(' .. user_settings.colors.total_loss .. ')-' .. format_thousands(settings.all_time_spent) .. '\\cr gil'
     }
@@ -512,11 +572,13 @@ windower.register_event('addon command', function(comm, ...)
     elseif comm == 'show' then
         hud_header:show()
         hud_body:show()
+        hud_side:show()
         is_visible = true
         windower.add_to_chat(8, 'BrokeWatch: UI shown.')
     elseif comm == 'hide' then
         hud_header:hide()
         hud_body:hide()
+        hud_side:hide()
         is_visible = false
         windower.add_to_chat(8, 'BrokeWatch: UI hidden.')
     elseif comm == 'sound' then

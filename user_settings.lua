@@ -21,6 +21,13 @@ return {
             color = { alpha = 255, red = 255, green = 255, blue = 255 },
             stroke = { alpha = 255, red = 0, green = 0, blue = 0, width = 3 },
             bg = { alpha = 0, red = 0, green = 0, blue = 0, visible = false }
+        },
+        side = {
+            font = 'Consolas',
+            size = 9,
+            color = { alpha = 255, red = 255, green = 255, blue = 255 },
+            stroke = { alpha = 255, red = 0, green = 0, blue = 0, width = 2 },
+            bg = { alpha = 0, red = 0, green = 0, blue = 0, visible = false }
         }
     },
     colors = {
@@ -30,7 +37,8 @@ return {
         inactive_status = '100,180,130',
         session_loss = '200,120,120',
         total_loss = '200,90,90',
-        recent_loss = '200,105,105'
+        side_label = '140,140,140',
+        side_value = '218,165,32'
     },
     sounds = {
         default_effect = 'cash_register_01.wav',
