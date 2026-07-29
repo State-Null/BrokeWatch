@@ -168,6 +168,7 @@ local current_hud_alpha = 255
 local is_visible = false
 local pending_gil_gains = 0
 local is_tracking_active = false
+local last_x, last_y = nil, nil
 
 -- Initialize milestones helper
 local function init_milestones()
@@ -205,7 +206,6 @@ local function trigger_flair(text, is_dramatic, sound_path)
 end
 
 -- Synchronize positions and animate flair in prerender
-local last_x, last_y = nil, nil
 windower.register_event('prerender', function()
     if is_visible then
         local x, y = hud_header:pos()
@@ -225,7 +225,8 @@ windower.register_event('prerender', function()
         else
             local alpha = math.floor(255 * (1 - t))
             local float_offset = math.floor(30 * t) -- floats up 30 pixels
-            local x, y = hud_header:pos()
+            local x = last_x or 100
+            local y = last_y or 100
             hud_flair:pos(x, y - 20 - float_offset) -- floats above the header
             hud_flair:alpha(alpha)
             hud_flair:stroke_alpha(alpha)
@@ -317,6 +318,10 @@ local function update_ui()
     hud_header:show()
     hud_body:show()
     is_visible = true
+    
+    local x, y = hud_header:pos()
+    last_x, last_y = x, y
+    hud_body:pos(x, y + 38)
     
     local active_text = active 
         and ('\\cs(' .. user_settings.colors.active_status .. ')SPENDING v\\cr') 
