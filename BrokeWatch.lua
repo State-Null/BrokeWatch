@@ -364,7 +364,7 @@ local function check_gil()
         pending_gil_gains = 0
         
         last_activity_time = os.clock()
-        if is_hoxne_equipped() and is_enchantment_active() then
+        if is_tracking_active then
             local actual_spent = math.floor((net_spent + 500) / 1000) * 1000
             if actual_spent > 0 then
                 session_spent = session_spent + actual_spent
@@ -416,6 +416,10 @@ end
 windower.register_event('incoming text', function(original, modified, mode, blocked)
     if not is_tracking_active then
         pending_gil_gains = 0
+        return
+    end
+    
+    if not original:find('gil') then
         return
     end
     
