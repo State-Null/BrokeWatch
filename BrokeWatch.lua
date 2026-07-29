@@ -266,7 +266,7 @@ windower.register_event('prerender', function()
             hud_body:pos(x, y + 38) -- snaps body 38 pixels below header
             last_x, last_y = x, y
         end
-        hud_side:pos(x + 160, y + 4)
+        hud_side:pos(x + (user_settings.side_offset_x or 185), y + (user_settings.side_offset_y or 5))
     end
     
     if flair_visible and flair_fading then
@@ -396,7 +396,7 @@ local function update_ui()
     local x, y = hud_header:pos()
     last_x, last_y = x, y
     hud_body:pos(x, y + 38)
-    hud_side:pos(x + 160, y + 4)
+    hud_side:pos(x + (user_settings.side_offset_x or 185), y + (user_settings.side_offset_y or 5))
     
     local active_text = active 
         and ('\\cs(' .. user_settings.colors.active_status .. ')SPENDING v\\cr') 
@@ -415,6 +415,14 @@ local function update_ui()
     }
     
     hud_body:text(table.concat(lines, '\n'))
+    
+    -- Force opacity to persist through text modifications
+    hud_header:alpha(current_hud_alpha)
+    hud_header:stroke_alpha(current_hud_alpha)
+    hud_body:alpha(current_hud_alpha)
+    hud_body:stroke_alpha(current_hud_alpha)
+    hud_side:alpha(current_hud_alpha)
+    hud_side:stroke_alpha(current_hud_alpha)
 end
 
 -- Check gil difference and update tracking
