@@ -166,7 +166,6 @@ local last_activity_time = os.clock()
 local last_active_state = false
 local current_hud_alpha = 255
 local is_visible = false
-local pending_gil_gains = 0
 local is_tracking_active = false
 local last_x, last_y = nil, nil
 
@@ -358,14 +357,12 @@ local function check_gil()
         return
     end
 
-    if new_gil < current_gil or pending_gil_gains > 0 then
+    if new_gil < current_gil then
         local diff = current_gil - new_gil
-        local net_spent = diff + pending_gil_gains
-        pending_gil_gains = 0
         
         last_activity_time = os.clock()
         if is_tracking_active then
-            local actual_spent = math.floor((net_spent + 500) / 1000) * 1000
+            local actual_spent = math.floor((diff + 500) / 1000) * 1000
             if actual_spent > 0 then
                 session_spent = session_spent + actual_spent
                 settings.all_time_spent = settings.all_time_spent + actual_spent
@@ -411,24 +408,6 @@ local function check_gil()
     current_gil = new_gil
     update_ui()
 end
-
--- Intercept FFXI chat logs to capture exact gil gains from mob drops
-windower.register_event('incoming text', function(original, modified, mode, blocked)
-    if not is_tracking_active then
-        pending_gil_gains = 0
-        return
-    end
-    
-    if not original:find('gil') then
-        return
-    end
-    
-    local clean_text = original:strip_format()
-    local gain = clean_text:match('You find (%d+) gil%.')
-    if gain then
-        pending_gil_gains = pending_gil_gains + tonumber(gain)
-    end
-end)
 
 -- Incoming chunk listener for tracking gil state changes
 local check_scheduled = false
