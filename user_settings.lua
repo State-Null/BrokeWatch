@@ -1,7 +1,7 @@
 return {
     recent_interval = 900,
-    side_offset_x = 185,
-    side_offset_y = 5,
+    side_offset_x = 165,
+    side_offset_y = 11,
     fonts = {
         header = {
             font = 'Highwind',

@@ -285,7 +285,7 @@ windower.register_event('prerender', function()
             local x, y = hud_header:pos()
             if x ~= last_x or y ~= last_y then
                 hud_body:pos(x, y + 38) -- snaps body 38 pixels below header
-                hud_side:pos(x + (user_settings.side_offset_x or 195), y + (user_settings.side_offset_y or 11))
+                hud_side:pos(x + (user_settings.side_offset_x or 165), y + (user_settings.side_offset_y or 11))
                 last_x, last_y = x, y
             end
         end
@@ -427,7 +427,7 @@ local function update_ui()
     local x, y = hud_header:pos()
     last_x, last_y = x, y
     hud_body:pos(x, y + 38)
-    hud_side:pos(x + (user_settings.side_offset_x or 195), y + (user_settings.side_offset_y or 11))
+    hud_side:pos(x + (user_settings.side_offset_x or 165), y + (user_settings.side_offset_y or 11))
     
     local active_text = active 
         and ('\\cs(' .. user_settings.colors.active_status .. ')SPENDING v\\cr') 
